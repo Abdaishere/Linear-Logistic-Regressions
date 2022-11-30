@@ -1,10 +1,13 @@
 # In[1]
-# import modules~
+# import modules
 import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sb
 import numpy as np
+import pandas as pd
 from sklearn import preprocessing
+
+theta = np.zeros(5)
+iterations = int(5e6)
+alpha = 0.25
 
 # In[2]
 # Scatter plots for feature selection
@@ -52,6 +55,7 @@ y_train = np.array(y_full[:m]).transpose()
 X_test = np.array([X0[m:], X[0][m:], X[1][m:], X[2][m:], X[3][m:]]).transpose()
 y_test = np.array(y_full[m:]).transpose()
 
+
 # In[4]
 # Linear regression (GD)
 # cost function h(x) = theta1 + theta2 X1 + theta3 X2 + theta4 X3 + theta5 X4 == X.dot(theta)
@@ -60,9 +64,8 @@ def compute_cost(x, y, Theta):
     # print('hypothesis= ', hypothesis[:5])
     errors = np.subtract(hypothesis, y)
     # print('errors= ', errors[:5])
-    sqrErrors = np.square(errors)
-    print('sqrErrors= ', sqrErrors[:5])
-    J = 1 / (2 * m) * np.sum(sqrErrors)
+    # print('sqrErrors= ', sqrErrors[:5])
+    J = 1/(2 * m) * errors.T.dot(errors)
     return J
 
 
@@ -77,7 +80,6 @@ def gradient_descent(x, y, Theta, Alpha, i):
         sum_delta = (Alpha / m) * x.transpose().dot(errors)
         # print('sum_delta= ', sum_delta[:5])
         Theta = Theta - sum_delta
-
         costHistory[i] = compute_cost(x, y, Theta)
 
     return Theta, costHistory
@@ -94,10 +96,6 @@ def plot_history(ch, i):
     plt.show()
 
 
-theta = np.zeros(5)
-iterations = 1000000
-alpha = 0.15
-
 theta, cost_history = gradient_descent(X_train, y_train, theta, alpha, iterations)
 plot_history(cost_history, iterations)
 
@@ -105,5 +103,21 @@ print('Final value of theta =', theta)
 print('First 5 values from cost_history =', cost_history[:5])
 print('Last 5 values from cost_history =', cost_history[-5:])
 
+
 # In[5]
 # MSE (calculation and plot)
+
+def test(x, y, Theta):
+    hypothesis = x.dot(Theta)
+    errors = np.subtract(hypothesis, y)
+    sqrErrors = np.square(errors)
+    plt.plot(range(1, len(y_test) + 1), sqrErrors, color='Red')
+    plt.rcParams["figure.figsize"] = (10, 6)
+    plt.grid()
+    plt.xlabel("Test Number")
+    plt.ylabel("MSE")
+    plt.title("Accuracy")
+    plt.show()
+
+
+test(X_test, y_test, theta)
