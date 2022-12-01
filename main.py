@@ -2,12 +2,13 @@
 # import modules
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sb
 import pandas as pd
 from sklearn import preprocessing
 
 theta = np.zeros(5)
-iterations = int(5e6)
-alpha = 0.25
+iterations = int(1e8)
+alpha = 0.15
 
 # In[2]
 # Scatter plots for feature selection
@@ -16,21 +17,18 @@ alpha = 0.25
 
 # import file with data
 data = pd.read_csv(".\\car_data.csv")
-"""
-print(data.corr())
 
-# plotting correlation heatmap~
-dataPlot = sb.heatmap(data.corr(), cmap="YlGnBu", annot=True)
+# plotting correlation heatmap
+dataPlot = sb.heatmap(data.corr(numeric_only=True).abs(), cmap="YlGnBu", annot=True, )
 
 # displaying heatmap
 plt.show()
-"""
 
 # In[3]
 # Normalizing (z = (x – min) / (max – min)), shuffling, and splitting the data
 
 # shuffling to the same random state for debugging
-data = data.sample(frac=1, random_state=1).reset_index()
+data = data.sample(frac=1).reset_index()
 
 # Normalizing (z = (x – min) / (max – min))
 scaler = preprocessing.MinMaxScaler()
@@ -46,15 +44,20 @@ X4 = data['curbweight'].to_numpy()
 y_full = data['price'].to_numpy()
 
 # splitting the data %80 training, %20 testing
-m = int(data_size * 0.8)
+M = int(data_size * 0.8)
 X = scaler.fit_transform([X1, X2, X3, X4])
 
-X_train = np.array([X0[:m], X[0][:m], X[1][:m], X[2][:m], X[3][:m]]).transpose()
-y_train = np.array(y_full[:m]).transpose()
+X_train = np.array([X0[:M], X[0][:M], X[1][:M], X[2][:M], X[3][:M]]).transpose()
+y_train = np.array(y_full[:M]).transpose()
 
-X_test = np.array([X0[m:], X[0][m:], X[1][m:], X[2][m:], X[3][m:]]).transpose()
-y_test = np.array(y_full[m:]).transpose()
+X_test = np.array([X0[M:], X[0][M:], X[1][M:], X[2][M:], X[3][M:]]).transpose()
+y_test = np.array(y_full[M:]).transpose()
 
+
+# print("Shape of X_train :", X_train.shape)
+# print("Shape of Y_train :", y_train.shape)
+# print("Shape of X_test :", X_test.shape)
+# print("Shape of Y_test :", y_test.shape)
 
 # In[4]
 # Linear regression (GD)
@@ -65,21 +68,22 @@ def compute_cost(x, y, Theta):
     errors = np.subtract(hypothesis, y)
     # print('errors= ', errors[:5])
     # print('sqrErrors= ', sqrErrors[:5])
-    J = 1/(2 * m) * errors.T.dot(errors)
+    J = 1 / (2 * M) * errors.T.dot(errors)
     return J
 
 
-def gradient_descent(x, y, Theta, Alpha, i):
-    costHistory = np.zeros(i)
+def gradient_descent(x, y, Theta, Alpha, iteration):
+    costHistory = np.zeros(iteration)
 
-    for i in range(i):
+    for i in range(iteration):
         hypothesis = x.dot(Theta)
         # print('hypothesis= ', hypothesis[:5])
         errors = np.subtract(hypothesis, y)
         # print('errors= ', errors[:5])
-        sum_delta = (Alpha / m) * x.transpose().dot(errors)
+        sum_delta = (Alpha / M) * x.transpose().dot(errors)
         # print('sum_delta= ', sum_delta[:5])
         Theta = Theta - sum_delta
+
         costHistory[i] = compute_cost(x, y, Theta)
 
     return Theta, costHistory
@@ -118,6 +122,9 @@ def test(x, y, Theta):
     plt.ylabel("MSE")
     plt.title("Accuracy")
     plt.show()
+    error = (1 / x.shape[0]) * np.sum(np.abs(errors))
+    print("Test error is :", error * 100, "%")
+    print("Test Accuracy is :", (1 - error) * 100, "%")
 
 
 test(X_test, y_test, theta)
