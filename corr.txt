@@ -1,0 +1,17 @@
+                 price
+symboling        -0.079978
+wheelbase         0.577816
+carlength         0.682920
+carwidth          0.759325 //
+carheight         0.119336
+curbweight        0.835305 //
+enginesize        0.874145 //
+boreratio         0.553173
+stroke            0.079443
+compressionratio  0.067984
+horsepower        0.808139 //
+peakrpm           -0.085267
+citympg           -0.685751
+highwaympg        -0.697599
+
+[16 rows x 16 columns]
