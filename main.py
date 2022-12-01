@@ -1,13 +1,13 @@
-# In[1]
+# In[0]
 # import modules
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sb
 import pandas as pd
-from sklearn import preprocessing
+import seaborn as sb
 
+# In[1]
 theta = np.zeros(5)
-iterations = int(1e8)
+iterations = int(1e3)
 alpha = 0.15
 
 # In[2]
@@ -18,39 +18,57 @@ alpha = 0.15
 # import file with data
 data = pd.read_csv(".\\car_data.csv")
 
-# plotting correlation heatmap
-dataPlot = sb.heatmap(data.corr(numeric_only=True).abs(), cmap="YlGnBu", annot=True, )
+slots = [['horsepower', 'Red'],
+         ['carwidth', 'Green'],
+         ['curbweight', 'Blue'],
+         ['enginesize', 'yellow']]
 
-# displaying heatmap
-plt.show()
+
+def scatter_plot(slot, color):
+    fig, axis = plt.subplots(figsize=(7, 7))
+    axis.scatter(data[slot], data['price'], c=color, label='Training Data')
+    axis.legend(loc=2)
+    axis.set_xlabel(slot)
+    axis.set_ylabel('Price')
+    axis.set_title(slot + ' vs Price')
+    plt.show()
+
+
+for i in slots:
+    scatter_plot(i[0], i[1])
 
 # In[3]
 # Normalizing (z = (x – min) / (max – min)), shuffling, and splitting the data
 
 # shuffling to the same random state for debugging
 data = data.sample(frac=1).reset_index()
-
-# Normalizing (z = (x – min) / (max – min))
-scaler = preprocessing.MinMaxScaler()
-
-# best 4 of the numerical features X1,X2,X3,X4 and X0 always equal 1
 data_size = len(data['ID'])
 
+# Normalizing (z = (x – min) / (max – min))
+# best 4 of the numerical features X1,X2,X3,X4 and X0 always equal 1
+
 X0 = np.ones(data_size)
+
 X1 = data['horsepower'].to_numpy()
+X1 = ((X1 - min(X1)) / (max(X1) - min(X1)))
+
 X2 = data['carwidth'].to_numpy()
+X2 = ((X2 - min(X2)) / (max(X2) - min(X2)))
+
 X3 = data['enginesize'].to_numpy()
+X3 = ((X3 - min(X3)) / (max(X3) - min(X3)))
+
 X4 = data['curbweight'].to_numpy()
+X4 = ((X4 - min(X4)) / (max(X4) - min(X4)))
+
 y_full = data['price'].to_numpy()
 
 # splitting the data %80 training, %20 testing
-M = int(data_size * 0.8)
-X = scaler.fit_transform([X1, X2, X3, X4])
-
-X_train = np.array([X0[:M], X[0][:M], X[1][:M], X[2][:M], X[3][:M]]).transpose()
+M = int(data_size * 0.85)
+X_train = np.array([X0[:M], X1[:M], X2[:M], X3[:M], X4[:M]]).transpose()
 y_train = np.array(y_full[:M]).transpose()
 
-X_test = np.array([X0[M:], X[0][M:], X[1][M:], X[2][M:], X[3][M:]]).transpose()
+X_test = np.array([X0[M:], X1[M:], X2[M:], X3[M:], X4[M:]]).transpose()
 y_test = np.array(y_full[M:]).transpose()
 
 
@@ -61,7 +79,7 @@ y_test = np.array(y_full[M:]).transpose()
 
 # In[4]
 # Linear regression (GD)
-# cost function h(x) = theta1 + theta2 X1 + theta3 X2 + theta4 X3 + theta5 X4 == X.dot(theta)
+# cost function h(x) = theta0 X0 + theta1 X1 + theta2 X2 + theta3 X3 + theta4 X4 == X.dot(theta)
 def compute_cost(x, y, Theta):
     hypothesis = x.dot(Theta)
     # print('hypothesis= ', hypothesis[:5])
@@ -111,9 +129,9 @@ print('Last 5 values from cost_history =', cost_history[-5:])
 # In[5]
 # MSE (calculation and plot)
 
-def test(x, y, Theta):
-    hypothesis = x.dot(Theta)
-    errors = np.subtract(hypothesis, y)
+def test(xt, yt, Theta):
+    hypothesis = xt.dot(Theta)
+    errors = np.subtract(hypothesis, yt)
     sqrErrors = np.square(errors)
     plt.plot(range(1, len(y_test) + 1), sqrErrors, color='Red')
     plt.rcParams["figure.figsize"] = (10, 6)
@@ -122,9 +140,28 @@ def test(x, y, Theta):
     plt.ylabel("MSE")
     plt.title("Accuracy")
     plt.show()
-    error = (1 / x.shape[0]) * np.sum(np.abs(errors))
+    error = (1 / yt.shape[0]) * np.sum(np.abs(errors))
     print("Test error is :", error * 100, "%")
     print("Test Accuracy is :", (1 - error) * 100, "%")
 
 
 test(X_test, y_test, theta)
+
+
+# In[6]
+def training_epoch_test():
+    fig, ax = plt.subplots(figsize=(7, 7))
+    learning_rate = [0.1,0.01,0.001, 0.9, 0.03]
+    colors = ['red', 'green', 'blue', 'black', 'yellow']
+    for i in range(len(learning_rate)):
+        best_theta, cost = gradient_descent(X_train, y_train, np.zeros(5), learning_rate[i], iterations)
+        ax.plot(np.arange(iterations), cost, colors[i], label="alpha = " + str(learning_rate[i]))
+
+    ax.legend(loc=1)
+    ax.set_xlabel('Iteration')
+    ax.set_ylabel('Cost')
+    ax.set_title('Error vs Training Epoch')
+    plt.show()
+
+
+training_epoch_test()
