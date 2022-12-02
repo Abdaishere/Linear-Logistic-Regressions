@@ -3,12 +3,17 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sb
+from sklearn.model_selection import ShuffleSplit
 
 # In[1]
-theta = np.zeros(5)
-iterations = int(1e3)
-alpha = 0.15
+slots = [['horsepower', 'Red'],
+         ['carwidth', 'Green'],
+         ['curbweight', 'Blue'],
+         ['enginesize', 'yellow']]
+
+theta = np.zeros(len(slots) + 1)
+iterations = int(1e6)
+alpha = 0.005
 
 # In[2]
 # Scatter plots for feature selection
@@ -17,11 +22,6 @@ alpha = 0.15
 
 # import file with data
 data = pd.read_csv(".\\car_data.csv")
-
-slots = [['horsepower', 'Red'],
-         ['carwidth', 'Green'],
-         ['curbweight', 'Blue'],
-         ['enginesize', 'yellow']]
 
 
 def scatter_plot(slot, color):
@@ -63,7 +63,7 @@ X4 = ((X4 - min(X4)) / (max(X4) - min(X4)))
 
 y_full = data['price'].to_numpy()
 
-# splitting the data %80 training, %20 testing
+# splitting the data %85 training, %15 testing
 M = int(data_size * 0.85)
 X_train = np.array([X0[:M], X1[:M], X2[:M], X3[:M], X4[:M]]).transpose()
 y_train = np.array(y_full[:M]).transpose()
@@ -140,7 +140,15 @@ def test(xt, yt, Theta):
     plt.ylabel("MSE")
     plt.title("Accuracy")
     plt.show()
-    error = (1 / yt.shape[0]) * np.sum(np.abs(errors))
+    errors = abs(errors)
+    threshold = 400
+    for i in range(len(errors)):
+        if errors[i] < threshold:
+            errors[i] = 0
+        else:
+            errors[i] = 1
+
+    error = (1 / len(errors)) * np.sum(errors)
     print("Test error is :", error * 100, "%")
     print("Test Accuracy is :", (1 - error) * 100, "%")
 
